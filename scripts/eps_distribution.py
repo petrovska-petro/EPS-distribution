@@ -42,13 +42,13 @@ def get_depositors_sett(addresses, start_block):
         token_contract = Contract(addr)
         token = web3.eth.contract(token_contract.address, abi=token_contract.abi)
         addresses = set(addresses)
-        latest = int(chain[-1].number) - 650
-        for height in range(start_block, latest, 500):
+        latest = int(chain[-1].number) - 1000
+        for height in range(start_block, latest, 1000):
             print(f"{height}/{latest}")
             addresses.update(
                 i.args._from
                 for i in token.events.Transfer().getLogs(
-                    fromBlock=height, toBlock=height + 500
+                    fromBlock=height, toBlock=height + 1000
                 )
                 if i.args._to == setts_entitled[idx]
             )
@@ -192,12 +192,13 @@ def main():
             start_block = data["latest"]
             addresses = data["addresses"]
     else:
-        start_block = 12920000 # 2 weeks back
+        # strategy StrategyConvexStakingOptimizer deployed block
+        start_block = 12729411
         addresses = []
     #addresses, height = get_depositors_sett(addresses, start_block)
     with addresses_json.open("w") as file:
         json.dump({"addresses": addresses, "latest": 12999913}, file)
-    
+
     seven_days = 604800
     snapshot_time = int((time.time() // seven_days) * seven_days)
     snapshot_block = get_block_at_timestamp(snapshot_time)
@@ -207,7 +208,7 @@ def main():
     with balances_json.open("w") as file:
         json.dump({"balances": balances}, file)
 
-    distribution = get_proof(balances, 12999913)
+    distribution = get_proof(balances, snapshot_block)
 
     date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
     distro_json = Path(f"distributions/distribution-{date}.json")
