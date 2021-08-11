@@ -1,0 +1,4 @@
+autofetch_sources: true
+networks:
+  default: eth
+  explorer: https://api.etherscan.io/api

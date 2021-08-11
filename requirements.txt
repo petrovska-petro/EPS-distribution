@@ -1,0 +1,4 @@
+eth-brownie
+eth-abi
+eth-utils
+black
