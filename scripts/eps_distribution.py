@@ -166,6 +166,24 @@ def get_proof(balances, snapshot_block):
     return distribution
 
 
+def get_block_at_timestamp(timestamp):
+    current = chain[-1]
+
+    high = current.number - (current.timestamp - timestamp) // 15
+    low = current.number - (current.timestamp - timestamp) // 11
+
+    while low <= high:
+        middle = low + (high - low) // 2
+        block = chain[middle]
+        if block.timestamp >= timestamp and chain[middle - 1].timestamp < timestamp:
+            return middle
+        elif block.timestamp < timestamp:
+            low = middle + 1
+        else:
+            high = middle - 1
+    raise ValueError
+
+
 def main():
     addresses_json = Path("addresses.json")
     if addresses_json.exists():
@@ -174,20 +192,24 @@ def main():
             start_block = data["latest"]
             addresses = data["addresses"]
     else:
-        start_block = 12950000
+        start_block = 12920000 # 2 weeks back
         addresses = []
-    # addresses, height = get_depositors_sett(addresses, start_block)
+    #addresses, height = get_depositors_sett(addresses, start_block)
     with addresses_json.open("w") as file:
         json.dump({"addresses": addresses, "latest": 12999913}, file)
-    balances = get_receipt_balances(addresses, start_block)
+    
+    seven_days = 604800
+    snapshot_time = int((time.time() // seven_days) * seven_days)
+    snapshot_block = get_block_at_timestamp(snapshot_time)
+
+    balances = get_receipt_balances(addresses, snapshot_block)
     balances_json = Path("balances.json")
     with balances_json.open("w") as file:
         json.dump({"balances": balances}, file)
 
-    snapshot_time = int((time.time() // 604800) * 604800)
     distribution = get_proof(balances, 12999913)
 
-    #date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
-    distro_json = Path(f"distributions/distribution-example.json")
+    date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
+    distro_json = Path(f"distributions/distribution-{date}.json")
     with distro_json.open("w") as fp:
         json.dump(distribution, fp)

@@ -1,0 +1,42 @@
+{
+  "tokenTotal": "0x39bbfd01c1cccc33000",
+  "blockHeight": 12999913,
+  "claims": {
+    "0x01f9a987cb6b27dcb88062a35fcf5cecac9ada96": {
+      "index": 0,
+      "amount": "0x93a41386abec70000"
+    },
+    "0x0b0c67f4ef9abc2323fd6cfc14f79a30c6604efa": {
+      "index": 1,
+      "amount": "0x29e05819d6788e00000"
+    },
+    "0x1d8d739912aae17819618e6e33580284c16785a9": {
+      "index": 2,
+      "amount": "0x491c1eba5223bc000"
+    },
+    "0x45e49ce059706fb814895e8337f8bb3d94fdf1c7": {
+      "index": 3,
+      "amount": "0xd8d8e27ac12bf0000"
+    },
+    "0x52f00b86cd0a23f03821ad2f9fa0c4741e692821": {
+      "index": 4,
+      "amount": "0x50ec2b93d1d838000"
+    },
+    "0x97f0978c18de9b61840d4627040aea796090343f": {
+      "index": 5,
+      "amount": "0x175f67097b0aaf000"
+    },
+    "0xc64ef1c4c8f417657c6e20b367a6bb4ac4fcb6d3": {
+      "index": 6,
+      "amount": "0x342952e226a0c60000"
+    },
+    "0xcf6046fceee250ce41dbe61618af26d7a39b6169": {
+      "index": 7,
+      "amount": "0x97aeb5dd7eddf80000"
+    },
+    "0xeef1b2fa1743e9215e1d8881d52b886618453c5e": {
+      "index": 8,
+      "amount": "0x1003fb497f03350000"
+    }
+  }
+}
