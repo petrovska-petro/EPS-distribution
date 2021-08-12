@@ -1,0 +1,150 @@
+{
+  "tokenTotal": "0x398679224793d159b30",
+  "blockHeight": 12917419,
+  "claims": {
+    "0x05d86155059212345aeb0224ae0b717b7099dfd5": {
+      "index": 0,
+      "amount": "0x3ed9b611a9d31a000"
+    },
+    "0x0c1e99991dd2f7d374bff13f9f52284ce6cfdae5": {
+      "index": 1,
+      "amount": "0x4fa72001bd96e400"
+    },
+    "0x3203b5c32f09317aabcbd5ad1c7b11945a931c01": {
+      "index": 2,
+      "amount": "0x2d868976e4c2640000"
+    },
+    "0x32bbc0b35a2ccc6a15eafe3ad91bccb0dbf1059e": {
+      "index": 3,
+      "amount": "0xf93f873a00ea20000"
+    },
+    "0x3af30b956f1737005b6e3146dbbd35b70f30df91": {
+      "index": 4,
+      "amount": "0xaf0f59a2377da800"
+    },
+    "0x3cacb4468b53fba62bb30ed5975a78864ecf5ff9": {
+      "index": 5,
+      "amount": "0x1905c0dce22d1f000"
+    },
+    "0x3d0576fadc008ede206edf3506d3d7a94351a5a6": {
+      "index": 6,
+      "amount": "0xab4ad0c50f32e000"
+    },
+    "0x3e7dd7df9c1ffd12b8ecd94a27472bdc4d87ab7e": {
+      "index": 7,
+      "amount": "0x2143c9b573da64000"
+    },
+    "0x45f937d6032796b1e65d93a70c2c64c0e3eab62e": {
+      "index": 8,
+      "amount": "0x7c9ae6e33b67a000"
+    },
+    "0x4d6d474dcfe25938e9e39ad797c18a3e6502e100": {
+      "index": 9,
+      "amount": "0x2b191515d9e6d000"
+    },
+    "0x52f00b86cd0a23f03821ad2f9fa0c4741e692821": {
+      "index": 10,
+      "amount": "0xbe739ad625595800"
+    },
+    "0x5404321d9cf102487475231b9876eced05a6837f": {
+      "index": 11,
+      "amount": "0xb6bf0fe5756a48000"
+    },
+    "0x563732112317145ef0dce0e2d387937764aa1045": {
+      "index": 12,
+      "amount": "0x2d76c752b8147c0000"
+    },
+    "0x58386b752d88d5edc9c9fa48aeb81c710e87c5f1": {
+      "index": 13,
+      "amount": "0x150d3a2475feb300"
+    },
+    "0x678390282ba8b5a5941e63742eee6eb8bb098ed9": {
+      "index": 14,
+      "amount": "0xc220cf55c82f7800"
+    },
+    "0x6b3a756407a013453524831bb7174c54c43a5c3c": {
+      "index": 15,
+      "amount": "0x1decf22e56679d0"
+    },
+    "0x6b9dfc960299166df15ab8a85f054c69e2be2353": {
+      "index": 16,
+      "amount": "0x78bcc3f04e7fa8000"
+    },
+    "0x6d0bbe84eba47434a0004fc65797b87ef1c913b7": {
+      "index": 17,
+      "amount": "0x2cacb5aeec8cb00000"
+    },
+    "0x6fb737d1ebb73cda6cfa36fd16d9273065d1b084": {
+      "index": 18,
+      "amount": "0x604ec631c0358000"
+    },
+    "0x7a09696e30192974d732ceb3e82e1306385886ff": {
+      "index": 19,
+      "amount": "0x1bc897443eaf5700"
+    },
+    "0x7ddc509638c4e31d729a96d29ad24aa5ebe5f4d9": {
+      "index": 20,
+      "amount": "0x2b91e66ae26c2400"
+    },
+    "0x80f30e20ef0e815eb2694fc3a88e435d095849ba": {
+      "index": 21,
+      "amount": "0x16d3ae1f17f92c0000"
+    },
+    "0x957ee7a79cead5337746a468ece63c23bef8bd4f": {
+      "index": 22,
+      "amount": "0x31ba3ab3ec0dc0"
+    },
+    "0x9a16809aaa68152c0d40dc90d7ff9970107140b0": {
+      "index": 23,
+      "amount": "0xed007e1f5dea90000"
+    },
+    "0xab930e565cad29ece7d143fc81ab876c68088fdd": {
+      "index": 24,
+      "amount": "0x1565dd50d91fbd000"
+    },
+    "0xabc1875d2884e340a005e7420b3bf332319f8187": {
+      "index": 25,
+      "amount": "0xacc900e830a9f0000"
+    },
+    "0xb4ec60de5ee53988e98f596655ef0b7110bb8d95": {
+      "index": 26,
+      "amount": "0x510440e0f3befc00"
+    },
+    "0xba743394ca6c38886c066e45bb9980a09aec7a65": {
+      "index": 27,
+      "amount": "0x38d56e6d64e79a0"
+    },
+    "0xbe3efc4b7d3e26b8f9305eff258bb3e57e0cda25": {
+      "index": 28,
+      "amount": "0x155cca76060312000"
+    },
+    "0xc1c560f37ccdea19a2da80e8ea656ac724ef49f1": {
+      "index": 29,
+      "amount": "0x3bc8a4d44d9e9400"
+    },
+    "0xd0e045b8378b07a2a822d67a7f933b07a7296796": {
+      "index": 30,
+      "amount": "0x6e813acbf3b13000"
+    },
+    "0xe9895b7d492e15b0f9f2d99b1006bc50e3816063": {
+      "index": 31,
+      "amount": "0x54c4310614b33c000"
+    },
+    "0xeba98049a242d9788c2fe12b74f774080a17bf3e": {
+      "index": 32,
+      "amount": "0x67bb7bdaa46f4000"
+    },
+    "0xfa5756494fea34c83808ccb6626f6b7e66d46c4c": {
+      "index": 33,
+      "amount": "0x505f62542e4fec000"
+    },
+    "0xfdde7ad56320b9cc691ad319a8fec2c8d6b993e6": {
+      "index": 34,
+      "amount": "0x2770cc4d045f6200000"
+    },
+    "0xff3fc772434505abff38eecde3c689d4b0254528": {
+      "index": 35,
+      "amount": "0x2c2c8bb396ec1a0000"
+    }
+  }
+}

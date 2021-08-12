@@ -1,6 +1,7 @@
 from brownie import Contract, chain, web3, Wei
 import json
 import time
+import datetime
 from pathlib import Path
 from fractions import Fraction
 from collections import defaultdict
@@ -131,7 +132,7 @@ def get_receipt_balances(addresses, block):
     return dict(output)
 
 
-def get_proof(balances, snapshot_block):
+def get_proof(balances, snapshot_block, last_week=1):
     # pick info for endpoint
     response = requests.get(url)
     json_airdrop_data = response.json()["matchedAirdropData"]
@@ -139,7 +140,7 @@ def get_proof(balances, snapshot_block):
         entry for entry in json_airdrop_data if entry is not None
     ]
     # calc the distribution
-    last_week_args = airdrop_data_filtered_none[-1]
+    last_week_args = airdrop_data_filtered_none[-last_week]
     # determine which portions goes to ibBTC and substract from total
     total_to_distribute = int(last_week_args["amount"])
     total_contributed = sum(balances.values())
@@ -195,20 +196,20 @@ def main():
         # strategy StrategyConvexStakingOptimizer deployed block
         start_block = 12729411
         addresses = []
-    #addresses, height = get_depositors_sett(addresses, start_block)
+    # addresses, height = get_depositors_sett(addresses, start_block)
     with addresses_json.open("w") as file:
         json.dump({"addresses": addresses, "latest": 12999913}, file)
 
-    seven_days = 604800
-    snapshot_time = int((time.time() // seven_days) * seven_days)
+    dt = datetime.datetime.strptime("2021-07-29 01:00:00", "%Y-%m-%d %H:%M:%S")
+    snapshot_time = int(time.mktime(dt.timetuple()))
     snapshot_block = get_block_at_timestamp(snapshot_time)
 
     balances = get_receipt_balances(addresses, snapshot_block)
     balances_json = Path("balances.json")
     with balances_json.open("w") as file:
         json.dump({"balances": balances}, file)
-
-    distribution = get_proof(balances, snapshot_block)
+    # specify 2 -> two weeks back time, last week claims by default
+    distribution = get_proof(balances, snapshot_block, 2)
 
     date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
     distro_json = Path(f"distributions/distribution-{date}.json")
