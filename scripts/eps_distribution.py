@@ -6,6 +6,8 @@ from pathlib import Path
 from fractions import Fraction
 from collections import defaultdict
 import requests
+import csv
+import numpy as np
 from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
 
@@ -43,8 +45,8 @@ def get_depositors_sett(addresses, start_block):
         token_contract = Contract(addr)
         token = web3.eth.contract(token_contract.address, abi=token_contract.abi)
         addresses = set(addresses)
-        latest = int(chain[-1].number)-20000
-        for height in range(start_block, latest+1, 10000):
+        latest = int(chain[-1].number) - 20000
+        for height in range(start_block, latest + 1, 10000):
             print(f"{height}/{latest}")
             addresses.update(
                 i.args._from
@@ -164,7 +166,7 @@ def get_proof(balances, snapshot_block, last_week=1):
         },
     }
 
-    return distribution
+    return distribution, balances
 
 
 def get_block_at_timestamp(timestamp):
@@ -185,6 +187,10 @@ def get_block_at_timestamp(timestamp):
     raise ValueError
 
 
+def takeSecond(elem):
+    return elem[1]
+
+
 def main():
     addresses_json = Path("addresses.json")
     if addresses_json.exists():
@@ -195,11 +201,11 @@ def main():
     else:
         start_block = 11380872
         addresses = []
-    #addresses, height = get_depositors_sett(addresses, start_block)
+    # addresses, height = get_depositors_sett(addresses, start_block)
     with addresses_json.open("w") as file:
         json.dump({"addresses": addresses, "latest": 12991602}, file)
 
-    dt = datetime.datetime.strptime("2021-08-05 01:00:00", "%Y-%m-%d %H:%M:%S")
+    dt = datetime.datetime.strptime("2021-08-12 01:00:00", "%Y-%m-%d %H:%M:%S")
     snapshot_time = int(time.mktime(dt.timetuple()))
     snapshot_block = get_block_at_timestamp(snapshot_time)
 
@@ -208,9 +214,25 @@ def main():
     with balances_json.open("w") as file:
         json.dump({"balances": balances}, file)
     # specify last arg -> X weeks back time, last week claims by default
-    distribution = get_proof(balances, snapshot_block)
+    distribution, balances = get_proof(balances, snapshot_block)
 
     date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
     distro_json = Path(f"distributions/distribution-{date}.json")
     with distro_json.open("w") as fp:
         json.dump(distribution, fp)
+
+    # generate csv
+    r = list(balances.items())
+    for idx in range(len(r)):
+        # format amount - better visual
+        r[idx] = (r[idx][0], r[idx][1] / (10 ** 18))
+
+    r.sort(key=takeSecond, reverse=True)
+    array_formatted_distribution = np.array(r)
+
+    csv_file = open(f"distributions_csv/distribution-{date}.csv", "a+", newline="")
+    with csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=["address", "amount"])
+        writer.writeheader()
+        write = csv.writer(csv_file)
+        write.writerows(array_formatted_distribution)
