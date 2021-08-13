@@ -18,22 +18,51 @@ assets_deposited = [
     "0x49849C98ae39Fff122806C06791Fa73784FB3675",
     "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3",
     "0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
+    "0xb19059ebb43466C323583928285a49f558E572Fd",
+    "0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
+    "0x2fE94ea3d5d4a175184081439753DE15AeF9d614",
+    "0x410e3E86ef427e30B9235497143881f717d93c2A",
 ]
 setts_entitled = [
     "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
     "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
     "0xb9D076fDe463dbc9f915E5392F807315Bf940334",
+    "0x8c76970747afd5398e958bDfadA4cf0B9FcA16c4",
+    "0x55912D0Cf83B75c492E761932ABc4DB4a5CB1b17",
+    "0xf349c0faA80fC1870306Ac093f75934078e28991",
+    "0x5Dce29e92b1b939F8E8C60DcF15BDE82A85be4a9",
 ]
 curve_swaps = [
     "0x93054188d876f558f4a66B2EF1d97d16eDf0895B",
     "0x7fC77b5c7614E1533320Ea6DDc2Eb61fa00A9714",
     "0xC25099792E9349C7DD09759744ea681C7de2cb66",
+    "0x4CA9b3063Ec5866A4B82E437059D2C43d1be596F",
+    "0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF",
+    "0xd81dA8D904b52208541Bade1bD6595D8a251F8dd",
+    "0x071c661B4DeefB59E2a3DdB20Db036821eeE8F4b",
 ]
-namings = ["sett_renCrv", "sett_sbtcCrv", "sett_tbtcCrv"]
+namings = [
+    "sett_renCrv",
+    "sett_sbtcCrv",
+    "sett_tbtcCrv",
+    "sett_hbtcCrv",
+    "sett_pbtcCrv",
+    "sett_obtcCrv",
+    "sett_bbtcCrv",
+]
 # tbtc/sbtcCrv requires first conversion to -> sbtcCrv -> wbtc
 curve_coin_idx = 1
 
 url = "https://www.convexfinance.com/api/eps/address-airdrop-info?address=0x6DA4c138Dd178F6179091C260de643529A2dAcfe"
+
+last_weeks = [
+    "2021-08-05",
+    "2021-07-29",
+    "2021-07-22",
+    "2021-07-15",
+    "2021-07-08",
+    "2021-07-01",
+]
 
 
 def get_depositors_sett(addresses, start_block):
@@ -45,8 +74,8 @@ def get_depositors_sett(addresses, start_block):
         token_contract = Contract(addr)
         token = web3.eth.contract(token_contract.address, abi=token_contract.abi)
         addresses = set(addresses)
-        latest = int(chain[-1].number) - 20000
-        for height in range(start_block, latest + 1, 10000):
+        latest = int(chain[-1].number) - 10272
+        for height in range(start_block, latest, 10000):
             print(f"{height}/{latest}")
             addresses.update(
                 i.args._from
@@ -69,6 +98,7 @@ def get_receipt_balances(addresses, block):
 
     """only run if contract are not recognise ->for asset in curve_swaps:
     Contract.from_explorer(asset)"""
+
     balances_setts = {}
     for idx, name in enumerate(namings):
         sett_receipt = Contract(setts_entitled[idx])
@@ -203,36 +233,39 @@ def main():
         addresses = []
     # addresses, height = get_depositors_sett(addresses, start_block)
     with addresses_json.open("w") as file:
-        json.dump({"addresses": addresses, "latest": 12991602}, file)
+        json.dump({"addresses": addresses, "latest": 13008152}, file)
 
-    dt = datetime.datetime.strptime("2021-08-12 01:00:00", "%Y-%m-%d %H:%M:%S")
-    snapshot_time = int(time.mktime(dt.timetuple()))
-    snapshot_block = get_block_at_timestamp(snapshot_time)
+    for num, date in enumerate(last_weeks):
+        dt = datetime.datetime.strptime(f"{date} 01:00:00", "%Y-%m-%d %H:%M:%S")
+        snapshot_time = int(time.mktime(dt.timetuple()))
+        snapshot_block = get_block_at_timestamp(snapshot_time)
 
-    balances = get_receipt_balances(addresses, snapshot_block)
-    balances_json = Path("balances.json")
-    with balances_json.open("w") as file:
-        json.dump({"balances": balances}, file)
-    # specify last arg -> X weeks back time, last week claims by default
-    distribution, balances = get_proof(balances, snapshot_block)
+        balances = get_receipt_balances(addresses, snapshot_block)
+        balances_json = Path("balances.json")
+        with balances_json.open("w") as file:
+            json.dump({"balances": balances}, file)
+        # specify last arg -> X weeks back time, last week claims by default
+        distribution, balances = get_proof(balances, snapshot_block, num + 2)
 
-    date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
-    distro_json = Path(f"distributions/distribution-{date}.json")
-    with distro_json.open("w") as fp:
-        json.dump(distribution, fp)
+        date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
+        distro_json = Path(f"distributions/distribution-{date}.json")
+        with distro_json.open("w") as fp:
+            json.dump(distribution, fp)
 
-    # generate csv
-    r = list(balances.items())
-    for idx in range(len(r)):
-        # format amount - better visual
-        r[idx] = (r[idx][0], r[idx][1] / (10 ** 18))
+        # generate csv
+        r = list(balances.items())
+        for idx in range(len(r)):
+            # format amount - better visual
+            r[idx] = (r[idx][0], r[idx][1] / (10 ** 18))
 
-    r.sort(key=takeSecond, reverse=True)
-    array_formatted_distribution = np.array(r)
+        r.sort(key=takeSecond, reverse=True)
+        array_formatted_distribution = np.array(r)
 
-    csv_file = open(f"distributions_csv/distribution-{date}.csv", "a+", newline="")
-    with csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=["address", "amount"])
-        writer.writeheader()
-        write = csv.writer(csv_file)
-        write.writerows(array_formatted_distribution)
+        csv_file = open(f"distributions_csv/distribution-{date}.csv", "a+", newline="")
+        with csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=["address", "amount"])
+            writer.writeheader()
+            write = csv.writer(csv_file)
+            write.writerows(array_formatted_distribution)
+
+        print(f"Created json & csv distributions for {date}")
