@@ -8,6 +8,7 @@ from collections import defaultdict
 import requests
 import csv
 import numpy as np
+from itertools import zip_longest
 from eth_abi.packed import encode_abi_packed
 from eth_utils import encode_hex
 
@@ -50,8 +51,9 @@ namings = [
     "sett_obtcCrv",
     "sett_bbtcCrv",
 ]
-# tbtc/sbtcCrv requires first conversion to -> sbtcCrv -> wbtc
+
 curve_coin_idx = 1
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 url = "https://www.convexfinance.com/api/eps/address-airdrop-info?address=0x6DA4c138Dd178F6179091C260de643529A2dAcfe"
 
@@ -64,30 +66,73 @@ last_weeks = [
     "2021-07-01",
 ]
 
+class MerkleTree:
+    def __init__(self, elements):
+        self.elements = sorted(set(web3.keccak(hexstr=el) for el in elements))
+        self.layers = MerkleTree.get_layers(self.elements)
 
-def get_depositors_sett(addresses, start_block):
+    @property
+    def root(self):
+        return self.layers[-1][0]
+
+    def get_proof(self, el):
+        el = web3.keccak(hexstr=el)
+        idx = self.elements.index(el)
+        proof = []
+        for layer in self.layers:
+            pair_idx = idx + 1 if idx % 2 == 0 else idx - 1
+            if pair_idx < len(layer):
+                proof.append(encode_hex(layer[pair_idx]))
+            idx //= 2
+        return proof
+
+    @staticmethod
+    def get_layers(elements):
+        layers = [elements]
+        while len(layers[-1]) > 1:
+            layers.append(MerkleTree.get_next_layer(layers[-1]))
+        return layers
+
+    @staticmethod
+    def get_next_layer(elements):
+        return [
+            MerkleTree.combined_hash(a, b)
+            for a, b in zip_longest(elements[::2], elements[1::2])
+        ]
+
+    @staticmethod
+    def combined_hash(a, b):
+        if a is None:
+            return b
+        if b is None:
+            return a
+        return web3.keccak(b"".join(sorted([a, b])))
+
+
+def get_depositors_sett(start_block):
     addresses_dict = {}
     """only run if contract are not recognise -> for asset in assets_deposited:
         Contract.from_explorer(asset)"""
 
-    for idx, addr in enumerate(assets_deposited):
+    for idx, addr in enumerate(setts_entitled):
         token_contract = Contract(addr)
         token = web3.eth.contract(token_contract.address, abi=token_contract.abi)
-        addresses = set(addresses)
-        latest = int(chain[-1].number) - 10272
+        addresses = set([])
+        latest = int(chain[-1].number) - 10300
         for height in range(start_block, latest, 10000):
             print(f"{height}/{latest}")
+            # users who receive the receipt of depositing either via proxy-bridge or direct interaction
             addresses.update(
-                i.args._from
+                i.args["to"]
                 for i in token.events.Transfer().getLogs(
                     fromBlock=height, toBlock=height + 10000
                 )
-                if i.args._to == setts_entitled[idx]
+                if i.args["from"] == ZERO_ADDRESS
             )
 
-        print(f"naming: {namings[idx]}")
         sett_name = namings[idx]
         addresses_dict[sett_name] = sorted(addresses)
+        print(f"naming: {namings[idx]}")
         print(f"\nFound {len(addresses)} addresses")
 
     return addresses_dict, latest
@@ -191,12 +236,21 @@ def get_proof(balances, snapshot_block, last_week=1):
         (index, account, balances[account])
         for index, account in enumerate(sorted(balances))
     ]
-
+    nodes = [
+        encode_hex(encode_abi_packed(["uint", "address", "uint"], el))
+        for el in elements
+    ]
+    tree = MerkleTree(nodes)
     distribution = {
+        "merkleRoot": encode_hex(tree.root),
         "tokenTotal": hex(sum(balances.values())),
         "blockHeight": snapshot_block,
         "claims": {
-            user: {"index": index, "amount": hex(amount)}
+            user: {
+                "index": index,
+                "amount": hex(amount),
+                "proof": tree.get_proof(nodes[index]),
+            }
             for index, user, amount in elements
         },
     }
@@ -235,10 +289,9 @@ def main():
             addresses = data["addresses"]
     else:
         start_block = 11380872
-        addresses = []
-    # addresses, height = get_depositors_sett(addresses, start_block)
+    # addresses, height = get_depositors_sett(start_block)
     with addresses_json.open("w") as file:
-        json.dump({"addresses": addresses, "latest": 13008152}, file)
+        json.dump({"addresses": addresses, "latest": 13013463}, file)
 
     for num, date in enumerate(last_weeks):
         dt = datetime.datetime.strptime(f"{date} 01:00:00", "%Y-%m-%d %H:%M:%S")
