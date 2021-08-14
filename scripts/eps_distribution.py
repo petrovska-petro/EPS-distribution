@@ -124,7 +124,12 @@ def get_receipt_balances(addresses, block):
             decoded = [sett_receipt.balanceOf.decode_output(data) for data in response]
             # here we use ppfs to get val of underlying
             decoded = [value * Wei(ppfs / 10 ** 18) for value in decoded]
-            if name == "sett_tbtcCrv":
+            if (
+                name == "sett_tbtcCrv"
+                or name == "sett_pbtcCrv"
+                or name == "sett_obtcCrv"
+                or name == "sett_bbtcCrv"
+            ):
                 # needs first to get rate of sbtcCrv then wbtc
                 swap_helper = Contract(curve_swaps[1])
                 balances.update(
@@ -239,15 +244,15 @@ def main():
         dt = datetime.datetime.strptime(f"{date} 01:00:00", "%Y-%m-%d %H:%M:%S")
         snapshot_time = int(time.mktime(dt.timetuple()))
         snapshot_block = get_block_at_timestamp(snapshot_time)
+        date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
 
         balances = get_receipt_balances(addresses, snapshot_block)
-        balances_json = Path("balances.json")
+        balances_json = Path(f"balances_wbtc_denominated/balances-{date}.json")
         with balances_json.open("w") as file:
             json.dump({"balances": balances}, file)
         # specify last arg -> X weeks back time, last week claims by default
         distribution, balances = get_proof(balances, snapshot_block, num + 2)
 
-        date = time.strftime("%Y-%m-%d", time.gmtime(snapshot_time))
         distro_json = Path(f"distributions/distribution-{date}.json")
         with distro_json.open("w") as fp:
             json.dump(distribution, fp)
