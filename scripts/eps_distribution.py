@@ -8,22 +8,10 @@ from collections import defaultdict
 import requests
 import csv
 import numpy as np
-from itertools import zip_longest
-from eth_abi.packed import encode_abi_packed
-from eth_utils import encode_hex
 
 # Note: EPS distribution every Thrusday 00:00UTC
 
-# assets, setts and swaps contract involved
-assets_deposited = [
-    "0x49849C98ae39Fff122806C06791Fa73784FB3675",
-    "0x075b1bb99792c9E1041bA13afEf80C91a1e70fB3",
-    "0x64eda51d3Ad40D56b9dFc5554E06F94e1Dd786Fd",
-    "0xb19059ebb43466C323583928285a49f558E572Fd",
-    "0xDE5331AC4B3630f94853Ff322B66407e0D6331E8",
-    "0x2fE94ea3d5d4a175184081439753DE15AeF9d614",
-    "0x410e3E86ef427e30B9235497143881f717d93c2A",
-]
+# setts and swaps contract involved
 setts_entitled = [
     "0x6dEf55d2e18486B9dDfaA075bc4e4EE0B28c1545",
     "0xd04c48A53c111300aD41190D63681ed3dAd998eC",
@@ -32,6 +20,8 @@ setts_entitled = [
     "0x55912D0Cf83B75c492E761932ABc4DB4a5CB1b17",
     "0xf349c0faA80fC1870306Ac093f75934078e28991",
     "0x5Dce29e92b1b939F8E8C60DcF15BDE82A85be4a9",
+    "0xBE08Ef12e4a553666291E9fFC24fCCFd354F2Dd2",
+    "0x2B5455aac8d64C14786c3a29858E43b5945819C0",
 ]
 curve_swaps = [
     "0x93054188d876f558f4a66B2EF1d97d16eDf0895B",
@@ -41,6 +31,7 @@ curve_swaps = [
     "0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF",
     "0xd81dA8D904b52208541Bade1bD6595D8a251F8dd",
     "0x071c661B4DeefB59E2a3DdB20Db036821eeE8F4b",
+    "0x80466c64868E1ab14a1Ddf27A676C3fcBE638Fe5"
 ]
 namings = [
     "sett_renCrv",
@@ -50,10 +41,20 @@ namings = [
     "sett_pbtcCrv",
     "sett_obtcCrv",
     "sett_bbtcCrv",
+    "sett_tricrypto",
+    "sett_cvxCrv",
 ]
 
 curve_coin_idx = 1
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+# CRV - WETH - WBTC
+SWAPPING_PATH = [
+    "0xD533a949740bb3306d119CC777fa900bA034cd52",
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
+]
+sushi_router = "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F"
 
 url = "https://www.convexfinance.com/api/eps/address-airdrop-info?address=0x6DA4c138Dd178F6179091C260de643529A2dAcfe"
 
@@ -66,59 +67,17 @@ last_weeks = [
     "2021-07-01",
 ]
 
-class MerkleTree:
-    def __init__(self, elements):
-        self.elements = sorted(set(web3.keccak(hexstr=el) for el in elements))
-        self.layers = MerkleTree.get_layers(self.elements)
-
-    @property
-    def root(self):
-        return self.layers[-1][0]
-
-    def get_proof(self, el):
-        el = web3.keccak(hexstr=el)
-        idx = self.elements.index(el)
-        proof = []
-        for layer in self.layers:
-            pair_idx = idx + 1 if idx % 2 == 0 else idx - 1
-            if pair_idx < len(layer):
-                proof.append(encode_hex(layer[pair_idx]))
-            idx //= 2
-        return proof
-
-    @staticmethod
-    def get_layers(elements):
-        layers = [elements]
-        while len(layers[-1]) > 1:
-            layers.append(MerkleTree.get_next_layer(layers[-1]))
-        return layers
-
-    @staticmethod
-    def get_next_layer(elements):
-        return [
-            MerkleTree.combined_hash(a, b)
-            for a, b in zip_longest(elements[::2], elements[1::2])
-        ]
-
-    @staticmethod
-    def combined_hash(a, b):
-        if a is None:
-            return b
-        if b is None:
-            return a
-        return web3.keccak(b"".join(sorted([a, b])))
-
-
 def get_depositors_sett(start_block):
     addresses_dict = {}
-    """only run if contract are not recognise -> for asset in assets_deposited:
+    """only run if contract are not recognise -> for asset in setts_entitled:
         Contract.from_explorer(asset)"""
+
+    latest = int(chain[-1].number) - 11000
 
     for idx, addr in enumerate(setts_entitled):
         token_contract = Contract(addr)
         token = web3.eth.contract(token_contract.address, abi=token_contract.abi)
         addresses = set([])
-        latest = int(chain[-1].number) - 10300
         for height in range(start_block, latest, 10000):
             print(f"{height}/{latest}")
             # users who receive the receipt of depositing either via proxy-bridge or direct interaction
@@ -156,8 +115,11 @@ def get_receipt_balances(addresses, block):
         ]
         multicall = Contract("0x5e227AD1969Ea493B43F840cfF78d08a6fc17796")
 
-        # swap - calc_withdraw_one_coin(uint256, int128)
-        swap = Contract(curve_swaps[idx])
+        if name == "sett_cvxCrv":
+            router_contract = Contract(sushi_router)
+        else:
+            print(f"Target {name} and address {curve_swaps[idx]}")
+            swap = Contract(curve_swaps[idx])
 
         balances = {}
         step = 30
@@ -183,6 +145,18 @@ def get_receipt_balances(addresses, block):
                             swap.calc_withdraw_one_coin(balance, curve_coin_idx),
                             curve_coin_idx,
                         )
+                        for addr, balance in zip(
+                            addresses.get(name)[i : i + step], decoded
+                        )
+                        if balance > 0
+                    }
+                )
+            elif name == "sett_cvxCrv":
+                balances.update(
+                    {
+                        addr.lower(): router_contract.getAmountsOut(
+                            balance, SWAPPING_PATH
+                        )[2]
                         for addr, balance in zip(
                             addresses.get(name)[i : i + step], decoded
                         )
@@ -221,11 +195,12 @@ def get_proof(balances, snapshot_block, last_week=1):
     airdrop_data_filtered_none = [
         entry for entry in json_airdrop_data if entry is not None
     ]
+
     # calc the distribution
     last_week_args = airdrop_data_filtered_none[-last_week]
-    # determine which portions goes to ibBTC and substract from total
     total_to_distribute = int(last_week_args["amount"])
     total_contributed = sum(balances.values())
+
     balances = {
         k: int(Fraction(v * total_to_distribute / total_contributed))
         for k, v in balances.items()
@@ -236,21 +211,12 @@ def get_proof(balances, snapshot_block, last_week=1):
         (index, account, balances[account])
         for index, account in enumerate(sorted(balances))
     ]
-    nodes = [
-        encode_hex(encode_abi_packed(["uint", "address", "uint"], el))
-        for el in elements
-    ]
-    tree = MerkleTree(nodes)
+
     distribution = {
-        "merkleRoot": encode_hex(tree.root),
         "tokenTotal": hex(sum(balances.values())),
         "blockHeight": snapshot_block,
         "claims": {
-            user: {
-                "index": index,
-                "amount": hex(amount),
-                "proof": tree.get_proof(nodes[index]),
-            }
+            user: {"index": index, "amount": hex(amount)}
             for index, user, amount in elements
         },
     }
@@ -289,10 +255,10 @@ def main():
             addresses = data["addresses"]
     else:
         start_block = 11380872
-    # addresses, height = get_depositors_sett(start_block)
+    #addresses, height = get_depositors_sett(start_block)
     with addresses_json.open("w") as file:
-        json.dump({"addresses": addresses, "latest": 13013463}, file)
-
+        json.dump({"addresses": addresses, "latest": 13038322}, file)
+    
     for num, date in enumerate(last_weeks):
         dt = datetime.datetime.strptime(f"{date} 01:00:00", "%Y-%m-%d %H:%M:%S")
         snapshot_time = int(time.mktime(dt.timetuple()))
